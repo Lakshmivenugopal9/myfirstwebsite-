@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stone Paper Scissors</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ===== COMMON THEME ===== */
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  min-height:100vh;
+  background:linear-gradient(135deg,#89f7fe,#66a6ff);
+  color:#222;
+}
+
+/* ===== OPENING PAGE ===== */
+#opening{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+.open-card{
+  width:340px;
+  height:220px;
+  background:linear-gradient(135deg,#ff9800,#ff5722);
+  border-radius:30px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.3);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  transition:transform 0.3s;
+}
+.open-card:hover{ transform:scale(1.08); }
+
+.open-emoji{ font-size:64px; }
+.open-title{ font-size:26px; font-weight:bold; color:white; }
+.open-sub{ font-size:16px; color:#fff; }
+
+/* ===== GAME PAGE ===== */
+#game{ display:none; }
+
+header{
+  text-align:center;
+  padding:20px;
+  font-size:28px;
+  font-weight:bold;
+  color:#333;
+}
+
+.top-controls{
+  text-align:center;
+  padding:10px;
+}
+
+button{
+  padding:10px 16px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  font-size:15px;
+  cursor:pointer;
+}
+button:hover{ transform:scale(1.05); }
+
+.primary{ background:#ff9800; color:#222; }
+.disabled{ background:#aaa; color:#666; cursor:not-allowed; }
+
+input{
+  padding:6px;
+  width:90px;
+  text-align:center;
+}
+
+.game-area{
+  display:flex;
+  justify-content:space-around;
+  padding:20px;
+  flex-wrap:wrap;
+}
+
+.player{
+  width:280px;
+  background:rgba(255,255,255,0.7);
+  border-radius:15px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+.choice{
+  font-size:60px;
+  margin:10px;
+}
+
+.score{
+  font-size:18px;
+}
+
+.status{
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  margin:10px;
+}
+
+.choice-buttons{
+  text-align:center;
+  margin:15px;
+}
+.choice-buttons button{ width:110px; }
+</style>
+</head>
+
+<body>
+
+<!-- ===== OPENING PAGE ===== -->
+<div id="opening">
+  <h1>Stone Paper Scissors</h1>
+  <p>Fair • Fun • Strategic</p>
+
+  <div class="open-card" onclick="startFromOpening()">
+    <div class="open-emoji">🪨📄✂️</div>
+    <div class="open-title">Play Game</div>
+    <div class="open-sub">Tap to begin</div>
+  </div>
+</div>
+
+<!-- ===== GAME PAGE ===== -->
+<div id="game">
+
+<header>🪨 Stone • 📄 Paper • ✂️ Scissors</header>
+
+<div class="top-controls">
+  <button class="primary" onclick="setMode('computer')">Play with Computer</button>
+  <button class="primary" onclick="setMode('two')">Two Players</button>
+  <button class="disabled">Play with Friend (Coming Soon)</button>
+  <br><br>
+  Rounds:
+  <input type="number" id="totalRounds" placeholder="5 or 10">
+  <button class="primary" onclick="startGame()">Start Game</button>
+</div>
+
+<div class="game-area">
+  <div class="player">
+    <h3>Player 1</h3>
+    <div class="choice" id="p1Display">❔</div>
+    <div class="score">Score: <span id="s1">0</span></div>
+  </div>
+
+  <div class="player">
+    <h3 id="p2Title">Player 2</h3>
+    <div class="choice" id="p2Display">❔</div>
+    <div class="score">Score: <span id="s2">0</span></div>
+  </div>
+</div>
+
+<div class="choice-buttons" id="controls" style="display:none;">
+  <button onclick="makeChoice('Stone')">🪨 Stone</button>
+  <button onclick="makeChoice('Paper')">📄 Paper</button>
+  <button onclick="makeChoice('Scissors')">✂️ Scissors</button>
+</div>
+
+<div class="status" id="statusText"></div>
+
+</div>
+
+<script>
+/* ===== OPENING LOGIC ===== */
+function startFromOpening(){
+  document.getElementById("opening").style.display="none";
+  document.getElementById("game").style.display="block";
+}
+
+/* ===== GAME LOGIC (UNCHANGED) ===== */
+let mode="", rounds=0, currentRound=0;
+let turn=1;
+let p1Choice="", p2Choice="";
+let score1=0, score2=0;
+
+function setMode(m){
+  mode=m;
+  document.getElementById("p2Title").innerText =
+    (m==="computer") ? "Computer" : "Player 2";
+}
+
+function startGame(){
+  rounds=parseInt(document.getElementById("totalRounds").value);
+  if(!mode || !rounds || rounds<=0){
+    alert("Select mode and valid rounds");
+    return;
+  }
+  document.getElementById("controls").style.display="block";
+  document.getElementById("statusText").innerText="Player 1's turn";
+}
+
+function makeChoice(choice){
+  if(currentRound>=rounds) return;
+
+  if(mode==="computer"){
+    p1Choice=choice;
+    p2Choice=randomChoice();
+    revealAndDecide();
+  }else{
+    if(turn===1){
+      p1Choice=choice;
+      document.getElementById("p1Display").innerText="🔒";
+      document.getElementById("statusText").innerText="Player 2's turn";
+      turn=2;
+    }else{
+      p2Choice=choice;
+      document.getElementById("p2Display").innerText="🔒";
+      revealAndDecide();
+      turn=1;
+    }
+  }
+}
+
+function revealAndDecide(){
+  document.getElementById("p1Display").innerText=icon(p1Choice);
+  document.getElementById("p2Display").innerText=icon(p2Choice);
+
+  if(p1Choice!==p2Choice){
+    if(
+      (p1Choice==="Stone"&&p2Choice==="Scissors")||
+      (p1Choice==="Paper"&&p2Choice==="Stone")||
+      (p1Choice==="Scissors"&&p2Choice==="Paper")
+    ) score1++;
+    else score2++;
+  }
+
+  document.getElementById("s1").innerText=score1;
+  document.getElementById("s2").innerText=score2;
+
+  currentRound++;
+
+  if(currentRound===rounds){
+    endGame();
+  }else{
+    document.getElementById("statusText").innerText =
+      "Round "+(currentRound+1)+" of "+rounds;
+  }
+}
+
+function endGame(){
+  if(score1>score2)
+    statusText.innerText="🏆 Player 1 Wins!";
+  else if(score2>score1)
+    statusText.innerText="🏆 "+document.getElementById("p2Title").innerText+" Wins!";
+  else
+    statusText.innerText="🤝 Match Draw!";
+}
+
+function randomChoice(){
+  return ["Stone","Paper","Scissors"][Math.floor(Math.random()*3)];
+}
+
+function icon(c){
+  return c==="Stone"?"🪨":c==="Paper"?"📄":"✂️";
+}
+</script>
+
+</body>
+</html>
